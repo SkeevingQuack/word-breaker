@@ -1,28 +1,20 @@
 use std::fmt;
 
 #[derive(Debug)]
-pub struct LetterError(&str)
-impl fmt::Display for CastError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} can't be Letter", self.0)
-    }
+pub struct Letter {
+    value: u8
 }
-
-#[derive(Debug)]
-pub struct Letter(u8)
 impl fmt::Display for Letter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value)
     }
 }
 impl Letter {
-    pub fn from(input: &str) -> Result<Self, LetterError> {
-        let characters = input.as_bytes();
-        if characters.len() != 1 && 96 < characters.0 < 123 {
-            Ok(Self{characters.0})
-        } else {
-            Err(LetterError(input))
-        }     
+    pub fn from_byte(input: u8) -> Self {
+        if !input.is_ascii_lowercase() {
+            panic!("{} not in ascii_lowercase", input);
+        }
+        Letter { value: input }
     }
     fn get_alphabet_index(&self) -> i32 {
         i32::from(self.0 - 97)
@@ -30,15 +22,27 @@ impl Letter {
 }
 
 #[derive(Debug)]
-struct Candidate(Letter, Letter, Letter, Letter, Letter)
-
+pub struct Candidate {
+    list: [Letter; 5]
+}
 impl Candidate {
-    pub fn from(input: &str) -> Result<Self, LetterError> {
+    pub fn from_str(input: &str) -> Self {
         let word = input.as_bytes();
         if word.len() != 5 {
-            Err(LetterError(input))
-        } else {
-            for byte in word {
-                
+            panic!("Candidate input str too long");
+        }
+        Self {
+            [Letter::from_byte(word[0]),
+             Letter::from_byte(word[1]),
+             Letter::from_byte(word[2]),
+             Letter::from_byte(word[3]),
+             Letter::from_byte(word[4])]
+        }       
+    }
+}
+impl fmt::Display for Candidate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        //TODO: find a cleaner way
+        write!(f, "{}{}{}{}{}", self[0], self[1], self[2], self[3], self[4]);
     }
 }
