@@ -3,5 +3,13 @@ name = "word-breaker"
 version = "0.1.0"
 authors = ["Brad Aylsworth <Brad.Aylsworth@gmail.com>"]
 
+[lib]
+name = "word_breaker_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "word_breaker_bin"
+path = "src/bin.rs"
+
 [dependencies]
 rand = "0.6"
