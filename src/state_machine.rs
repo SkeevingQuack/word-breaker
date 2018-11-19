@@ -26,16 +26,16 @@ pub enum Message {
 
 enum Response {
     //Word guessed; advance level
-    Success(Game_state),
+    Success(GameState),
     //Word not guessed in time; game over
-    Failure(Game_state),
+    Failure(GameState),
     //Duplicate guess, impossible hint, etc.
     Invalid(String),
     //Message processed; game continues apace
-    Step(Game_state)
+    Step(GameState)
 }
 
-struct Game_state {
+struct GameState {
     Secret: Candidate,
     Score: u16,
 
@@ -47,9 +47,9 @@ struct Game_state {
     Marked_exclude: [bool; 26]
 }
 
-impl Game_state {
-    pub fn init() -> Game_state {
-        Game_state {
+impl GameState {
+    pub fn init() -> GameState {
+        GameState {
             Secret: choose_secret(),
             Score: 0,
             Level: 1,
