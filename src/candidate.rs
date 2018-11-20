@@ -18,8 +18,8 @@ impl Letter {
         }
         Self { value: input }
     }
-    pub fn get_alphabet_index(&self) -> i32 {
-        i32::from(self.value - 97)
+    pub fn get_alphabet_index(&self) -> usize {
+        usize::from(self.value - 97)
     }
 }
 
