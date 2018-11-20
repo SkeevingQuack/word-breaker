@@ -1,68 +1,131 @@
-
-use std::fs::File;
-
-//use rand::seq::SliceRandom;
-use ::rand::Rng;
-use ::rand;
-
-use std::io;
-use std::io::Read;
-use std::io::Seek;
-
+use ::candidate::{Letter, Candidate};
+use self::Message::*;
+use self::Response::*;
 
 pub enum Message {
-    //Set up initial game state
-    //Init,
-
     //Make a guess
     Guess(Candidate),
     //Mark letter as confirmed
-    Mark_include(Letter),
+    MarkInclude(Letter),
     //Mark letter as unneeded
-    Mark_exclude(Letter),
+    MarkExclude(Letter),
     //Save state of current marks
-    Mark_branch
+    MarkBranch
 }
 
-enum Response {
+pub enum Response<'a> {
     //Word guessed; advance level
-    Success(GameState),
+    LevelUp(GameState),
     //Word not guessed in time; game over
-    Failure(GameState),
+    GameOver(GameState),
     //Duplicate guess, impossible hint, etc.
-    Invalid(String),
+    Invalid(GameState, &'a str),
     //Message processed; game continues apace
     Step(GameState)
 }
 
-struct GameState {
-    Secret: Candidate,
-    Score: u16,
+#[derive(Debug)]
+pub struct GameState {
+    secret: Candidate,
+    score: u16,
 
-    Level: u8,
-    Guesses_made: u8,
-    Guess_array: [Candidate; 34],
+    level: u8,
+    guesses: u8,
+    guess_array: [Option<Candidate>; 30],
+    hint_array: [u8; 30],
 
-    Marked_include: [bool; 26],
-    Marked_exclude: [bool; 26]
+    marked_include: [bool; 26],
+    marked_exclude: [bool; 26]
 }
-
 impl GameState {
     pub fn init() -> GameState {
         GameState {
-            Secret: choose_secret(),
-            Score: 0,
-            Level: 1,
-            Guesses_made: 0,
-            //Guess_array:
-            Marked_include: [bool; false],
-            Marked_exclude: [bool; false]
+            secret: choose_secret(),
+            score: 0,
+            level: 1,
+            guesses: 0,
+            guess_array: [None; 30],
+            hint_array: [0; 30],
+            marked_include: [false; 26],
+            marked_exclude: [false; 26]
+        }
     } 
 
-    pub fn process(&self, message: Message) -> Response {
+    pub fn process<'a>(mut self, message: Message) -> Response<'a> {
+        match message {
+            Guess(word) => {
+                let pushed = self.push_guess(&word);
+                if !pushed {
+                    Invalid(self, "Duplicate guess")
+                } else if word == self.secret {
+                    LevelUp(self)
+                    //TODO: win if any 5 result
+                } else if self.guesses == self.guess_limit() {
+                    GameOver(self)
+                } else {
+                    Step(self)
+                }
+            }
+            MarkInclude(letter) => {
+                Invalid(self, "Not implemented")
+            }
+            MarkExclude(letter) => {
+                Invalid(self, "Not implemented")
+            }
+            MarkBranch => {
+                Invalid(self, "Not implemented")
+            }
+        }        
+    }
 
+    fn push_guess(&mut self, guess: &Candidate) -> bool {
+        //Look through guess_array
+        //  If `guess` already exists, return false. Place `guess` in
+        //  first open slot and update `guesses` and `hint_array`
+        let mut i = 0;
+        for opt in self.guess_array.iter() {
+            i += 1;
+            match opt {
+                Some(word) => { if word == guess {return false;} }
+                None => { break; }
+            }   
+        }
+        self.guess_array[i] = Some(*guess);
+        self.guesses += 1;
+        self.hint_array[i] = self.secret.compare(*guess);
+                    
+        panic!("push_guess should not reach here");
+    }
+    fn guess_limit(&self) -> u8 {
+        let mut limit = 127;
+        if self.level > 5 {
+            limit = 5;
+        } else {
+            limit = self.level - 1;
+        }
+        30 - limit * 4
+    }
+    fn clone(&self) -> GameState {
+        GameState {
+            secret: self.secret.clone(),
+            score: self.score,
+            level: self.level,
+            guesses: self.guesses,
+            guess_array: self.guess_array.clone(),
+            hint_array: self.hint_array.clone(),
+            marked_include: self.marked_include.clone(),
+            marked_exclude: self.marked_exclude.clone()
+        }
     }
 }
+
+use std::fs::File;
+//use rand::seq::SliceRandom;
+use ::rand::Rng;
+use ::rand;
+use std::io;
+use std::io::Read;
+use std::io::Seek;
 
 fn choose_secret() -> Candidate {
     let mut f = File::open("src/wordlist/final.txt")
@@ -78,5 +141,17 @@ fn choose_secret() -> Candidate {
     handle.read_to_string(&mut secret)
         .expect("read failed");
 
-    Candidate(secret)
+    Candidate::from_str(&secret)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn choose_secret_good1() {
+        //Just make sure it doesn't panic
+        choose_secret();
+    }
+}
+        

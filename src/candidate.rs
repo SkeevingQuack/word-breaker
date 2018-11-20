@@ -1,7 +1,7 @@
 use std::fmt;
 use std::str;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Letter {
     value: u8
 }
@@ -23,7 +23,7 @@ impl Letter {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Candidate {
     list: [Letter; 5]
 }
@@ -40,6 +40,14 @@ impl Candidate {
                    Letter::from_byte(word[3]),
                    Letter::from_byte(word[4])]
         }       
+    }
+    pub fn compare(&self, other: Candidate) -> u8 {
+        let mut score = 0;
+        let zipped = self.list.iter().zip(other.list.iter());
+        for (this_letter, other_letter) in zipped {
+            if this_letter == other_letter { score += 1 };
+        }
+        score
     }
 }
 impl fmt::Display for Candidate {
