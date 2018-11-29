@@ -6,7 +6,6 @@ use std::io;
 use std::io::Read;
 use std::io::Seek;
 
-use std::str;
 use rand::seq::IteratorRandom;
 use ::candidate::{Candidate, Letter};
 

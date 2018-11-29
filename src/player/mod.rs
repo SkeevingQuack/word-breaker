@@ -5,21 +5,35 @@ use std::io;
 
 pub fn play() {
     let mut list = Wordlist::new();
-
     let mut word_record: Vec<Candidate> = Vec::new();
     let mut score_record: Vec<u8> = Vec::new();
-    
+
+    let mut temp_blacklist = String::new();
+    let mut temp_hints = 0u8;
     loop {
-        let word = list.get_word("", "").expect("Full list is empty");
-    
-        match receive_score(word) {
-            Some(num) => score_record.push(num),
-            None => continue
+        println!("{}", &temp_blacklist);
+        match list.get_word("", &temp_blacklist) {
+            Some(word) => {
+                match receive_score(word) {
+                    Some(num) => {
+                        score_record.push(num);
+                        temp_hints += num;
+                        word_record.push(word);
+                        temp_blacklist = format!("{}{}", temp_blacklist, word);
+                        
+                    }
+                    None => continue
+                }
+                if temp_hints == 5 { break; }
+                assert!(temp_hints < 6);
+            }
+            None => break
         }
-        word_record.push(word);
-        break
     }
-    println!("{}: {}", word_record[0], score_record[0]);
+
+    for (word, score) in word_record.iter().zip(score_record.iter()) {
+        println!("{}: {}", word, score);
+    }
 }
 
 fn receive_score(prompt: Candidate) -> Option<u8> {
